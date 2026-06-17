@@ -4,6 +4,28 @@
   "description": "Static, GitHub-Pages-hostable advanced search for WebNovel, powered by a manually-triggered Playwright snapshot crawler.",
   "type": "module",
   "private": true,
+  "license": "MIT",
+  "author": "Varun Patkar",
+  "homepage": "https://varun-patkar.github.io/webnovel-advanced-search/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Varun-Patkar/webnovel-advanced-search.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Varun-Patkar/webnovel-advanced-search/issues"
+  },
+  "keywords": [
+    "webnovel",
+    "advanced-search",
+    "tag-search",
+    "fanfiction",
+    "novels",
+    "github-pages",
+    "static-site",
+    "playwright",
+    "web-scraper",
+    "client-side-search"
+  ],
   "scripts": {
     "crawl": "node scripts/crawl.mjs",
     "serve": "node scripts/serve.mjs"

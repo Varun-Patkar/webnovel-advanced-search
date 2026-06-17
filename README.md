@@ -5,14 +5,18 @@ hosted entirely on **GitHub Pages**. Filter a snapshot of WebNovel's catalogue b
 **included/excluded tags**, type (novel/fanfic), rating, chapter count and
 keyword — all instantly in the browser.
 
+**🔎 Live site: https://varun-patkar.github.io/webnovel-advanced-search/**
+
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+
 WebNovel's own search APIs reject cross-origin browser calls (CORS/CSRF origin
 gate) and sit behind Cloudflare, so a static page cannot call them live. This
-project works around that with a **manually-triggered snapshot crawler**: a
-GitHub Actions workflow runs a real browser (Playwright), pulls the data through
-WebNovel's internal endpoints *same-origin*, and commits compact JSON into the
-repo. The static site then searches those JSON files — no backend, no proxy, no
-runtime CORS. See [API_RESEARCH.md](API_RESEARCH.md) for the full reverse-
-engineering write-up and why this is the approach.
+project works around that with an **on-demand snapshot crawler**: a local
+Playwright run drives a real browser, pulls the data through WebNovel's internal
+endpoints *same-origin*, and writes compact JSON committed into the repo. The
+static site then searches those JSON files — no backend, no proxy, no runtime
+CORS. See [API_RESEARCH.md](API_RESEARCH.md) for the full reverse-engineering
+write-up and why this is the approach.
 
 > ⚠️ Results are a **periodic, bounded snapshot** (a cached subset), not live
 > data. Unaffiliated with WebNovel; for personal use.
@@ -148,3 +152,11 @@ PRs that only update `data/*.json` are safe to merge as-is.
   `max_pages_per_tag` for broader coverage at the cost of size.
 - Tag ids, endpoints and field meanings are documented in
   [API_RESEARCH.md](API_RESEARCH.md).
+
+## License
+
+[MIT](LICENSE) © 2026 Varun Patkar.
+
+This project is an unofficial, fan-made tool and is **not affiliated with,
+endorsed by, or connected to WebNovel / Cloudary**. All book metadata belongs to
+its respective owners; this repo only caches a small public subset for search.
