@@ -155,7 +155,7 @@ PRs that only update `data/*.json` are safe to merge as-is.
 
 ## License
 
-[MIT](LICENSE) © 2026 Varun Patkar.
+[MIT](LICENSE) © 2026 Varun Anand Patkar.
 
 This project is an unofficial, fan-made tool and is **not affiliated with,
 endorsed by, or connected to WebNovel / Cloudary**. All book metadata belongs to

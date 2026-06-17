@@ -78,6 +78,24 @@ body {
   color: var(--text-dim);
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.gh-link {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-dim);
+  transition: color 0.12s ease, transform 0.12s ease;
+}
+
+.gh-link:hover {
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
 /* Layout ------------------------------------------------------------------ */
 .layout {
   display: grid;
@@ -375,4 +393,22 @@ body {
   margin: 0;
   font-size: 0.78rem;
   color: var(--text-dim);
+}
+
+.footer-links {
+  margin-top: 0.5rem !important;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.footer-links a {
+  color: var(--accent-2);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
 }
