@@ -1,0 +1,17 @@
+{
+  "name": "webnovel-advanced-search",
+  "version": "1.0.0",
+  "description": "Static, GitHub-Pages-hostable advanced search for WebNovel, powered by a manually-triggered Playwright snapshot crawler.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "crawl": "node scripts/crawl.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "playwright": "^1.61.0"
+  }
+}

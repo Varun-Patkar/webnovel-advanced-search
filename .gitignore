@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Playwright browser binaries / traces
+.playwright-mcp/
+test-results/
+playwright-report/
+
+# Persistent crawler browser profile (holds cf_clearance between runs)
+.wn-profile/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+
+# Local environment overrides
+.env
+.env.local

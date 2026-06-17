@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebNovel Advanced Search</title>
+    <meta
+      name="description"
+      content="Fast, client-side advanced search over a WebNovel snapshot: include/exclude tags, filter by rating, chapters and more."
+    />
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='14' font-size='14'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <h1 class="logo">📚 WebNovel <span>Advanced Search</span></h1>
+        <p class="snapshot-meta" id="snapshotMeta" aria-live="polite">Loading snapshot…</p>
+      </div>
+    </header>
+
+    <main class="wrap layout">
+      <!-- Filters sidebar ------------------------------------------------- -->
+      <aside class="filters" aria-label="Search filters">
+        <div class="field">
+          <label class="field-label" for="keyword">Keyword</label>
+          <input
+            type="search"
+            id="keyword"
+            class="input"
+            placeholder="Title, author or description…"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field">
+          <span class="field-label">Type</span>
+          <div class="segmented" id="typeSegmented" role="tablist">
+            <button class="seg active" data-type="all" role="tab">All</button>
+            <button class="seg" data-type="1" role="tab">Novel</button>
+            <button class="seg" data-type="4" role="tab">Fanfic</button>
+          </div>
+        </div>
+
+        <div class="field two-col">
+          <div>
+            <label class="field-label" for="minRating">Min rating</label>
+            <select id="minRating" class="input">
+              <option value="0">Any</option>
+              <option value="3">3.0+</option>
+              <option value="4">4.0+</option>
+              <option value="4.5">4.5+</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="minChapters">Min chapters</label>
+            <select id="minChapters" class="input">
+              <option value="0">Any</option>
+              <option value="50">50+</option>
+              <option value="300">300+</option>
+              <option value="1000">1000+</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="sortBy">Sort by</label>
+          <select id="sortBy" class="input">
+            <option value="col">Most collected</option>
+            <option value="v">Most viewed</option>
+            <option value="s">Highest rated</option>
+            <option value="ch">Most chapters</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="field-head">
+            <span class="field-label">Include tags <small id="includeCount"></small></span>
+          </div>
+          <input
+            type="search"
+            id="tagFilter"
+            class="input small"
+            placeholder="Filter tags…"
+            autocomplete="off"
+          />
+          <div class="tag-cloud" id="includeTags" aria-label="Include tags"></div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Exclude tags <small id="excludeCount"></small></span>
+          <div class="tag-cloud selected-only" id="excludeTags" aria-label="Exclude tags"></div>
+          <p class="hint">Tip: click a tag once to include, again to exclude, again to clear.</p>
+        </div>
+
+        <button class="btn-reset" id="resetBtn" type="button">Reset filters</button>
+      </aside>
+
+      <!-- Results --------------------------------------------------------- -->
+      <section class="results" aria-label="Results">
+        <div class="results-bar">
+          <span id="resultCount" class="result-count">—</span>
+          <span id="activeFilters" class="active-filters"></span>
+        </div>
+        <div class="grid" id="resultsGrid"></div>
+        <div class="empty" id="emptyState" hidden>
+          <p>No books match these filters.</p>
+        </div>
+        <button class="btn-more" id="loadMoreBtn" type="button" hidden>Show more</button>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          Unofficial client-side search over a periodic WebNovel snapshot. Data is a
+          cached subset and may be out of date. Not affiliated with WebNovel.
+        </p>
+      </div>
+    </footer>
+
+    <script type="module" src="assets/js/app.js"></script>
+  </body>
+</html>

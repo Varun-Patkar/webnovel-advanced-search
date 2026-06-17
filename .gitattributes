@@ -1,0 +1,11 @@
+# Normalize line endings so the repo stays consistent across platforms.
+# Text files use LF in the repo; tools/editors may check out as needed.
+* text=auto eol=lf
+
+# Generated data + lockfile are text.
+*.json text eol=lf
+*.js   text eol=lf
+*.mjs  text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.md   text eol=lf
