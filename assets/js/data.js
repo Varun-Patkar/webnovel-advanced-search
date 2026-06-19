@@ -33,31 +33,48 @@ async function loadJson(path, fallback) {
 }
 
 /**
- * Merge the per-category tag catalogues into a single id→name map and a grouped
- * structure for rendering. Group names are suffixed with their category when a
- * collision would otherwise hide one.
+ * Merge the per-category tag catalogues into structures keyed by tag *name*.
+ * Tags are treated as identical when they share a name, even if WebNovel
+ * assigns them different numeric ids per category (e.g. the same "onepiece"
+ * tag exists under two ids). Merging avoids showing the same tag twice in the
+ * "All" view and lets a single selection match either underlying id.
  * @param {object|null} novel  tags-novel.json contents.
  * @param {object|null} fanfic tags-fanfic.json contents.
- * @returns {{ tagName: Record<number,string>, groups: Array<{categoryType:number, name:string, tags:any[]}> }}
+ * @returns {{
+ *   tagName: Record<number,string>,
+ *   nameToIds: Record<string, number[]>,
+ *   tags: Array<{name:string, types:number[], ids:number[]}>
+ * }}
  */
 function buildTagModel(novel, fanfic) {
   const tagName = {};
-  const groups = [];
+  /** name -> merged tag entry, preserving first-seen order via the Map. */
+  const byName = new Map();
 
   for (const catalogue of [novel, fanfic]) {
     if (!catalogue) continue;
+    const type = catalogue.categoryType;
     for (const group of catalogue.groups ?? []) {
-      groups.push({
-        categoryType: catalogue.categoryType,
-        name: group.name,
-        tags: group.tags ?? [],
-      });
       for (const tag of group.tags ?? []) {
         tagName[tag.id] = tag.name;
+
+        let entry = byName.get(tag.name);
+        if (!entry) {
+          entry = { name: tag.name, types: [], ids: [] };
+          byName.set(tag.name, entry);
+        }
+        // Collect every distinct id and category this name appears under.
+        if (!entry.ids.includes(tag.id)) entry.ids.push(tag.id);
+        if (!entry.types.includes(type)) entry.types.push(type);
       }
     }
   }
-  return { tagName, groups };
+
+  const tags = [...byName.values()];
+  const nameToIds = {};
+  for (const entry of tags) nameToIds[entry.name] = entry.ids;
+
+  return { tagName, nameToIds, tags };
 }
 
 /**
@@ -66,7 +83,8 @@ function buildTagModel(novel, fanfic) {
  *   books: any[],
  *   generatedAt: string|null,
  *   tagName: Record<number,string>,
- *   groups: Array<{categoryType:number, name:string, tags:any[]}>
+ *   nameToIds: Record<string, number[]>,
+ *   tags: Array<{name:string, types:number[], ids:number[]}>
  * }>}
  */
 export async function loadSnapshot() {
@@ -76,12 +94,13 @@ export async function loadSnapshot() {
     loadJson(PATHS.tagsFanfic, null),
   ]);
 
-  const { tagName, groups } = buildTagModel(novel, fanfic);
+  const { tagName, nameToIds, tags } = buildTagModel(novel, fanfic);
   return {
     books: index.books ?? [],
     generatedAt: index.generatedAt ?? null,
     tagName,
-    groups,
+    nameToIds,
+    tags,
   };
 }
 

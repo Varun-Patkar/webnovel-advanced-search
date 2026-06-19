@@ -48,41 +48,35 @@ export function renderSnapshotMeta(el, generatedAt, bookCount) {
 
 /**
  * Render the "available" tag cloud: every tag that is neither included nor
- * excluded, restricted to the active content type. Tags already in the
- * include/exclude sets are hidden here because they live in their own sections.
+ * excluded, restricted to the active content type. Tags are keyed by name, so
+ * duplicate names across categories collapse into a single chip.
  * @param {HTMLElement} container
- * @param {Array<{categoryType:number, name:string, tags:any[]}>} groups
- * @param {Set<number>} include
- * @param {Set<number>} exclude
+ * @param {Array<{name:string, types:number[], ids:number[]}>} tags  Merged tags.
+ * @param {Set<string>} include
+ * @param {Set<string>} exclude
  * @param {string} filterText        Only show tags whose name contains this.
  * @param {('all'|number)} type      Active type filter (1 novel / 4 fanfic / 'all').
- * @param {(tagId:number)=>void} onToggle
+ * @param {(name:string)=>void} onToggle
  */
-export function renderAvailableTags(container, groups, include, exclude, filterText, type, onToggle) {
+export function renderAvailableTags(container, tags, include, exclude, filterText, type, onToggle) {
   container.innerHTML = '';
-  const seen = new Set();
   const needle = filterText.trim().toLowerCase();
   let count = 0;
 
-  for (const group of groups) {
-    // When a type is selected, only surface that category's tags.
-    if (type !== 'all' && group.categoryType !== type) continue;
-    for (const tag of group.tags) {
-      if (seen.has(tag.id)) continue;
-      seen.add(tag.id);
-      // Selected tags are rendered in the Included / Excluded sections instead.
-      if (include.has(tag.id) || exclude.has(tag.id)) continue;
-      if (needle && !tag.name.toLowerCase().includes(needle)) continue;
+  for (const tag of tags) {
+    // When a type is selected, only surface tags that exist in that category.
+    if (type !== 'all' && !tag.types.includes(type)) continue;
+    // Selected tags are rendered in the Included / Excluded sections instead.
+    if (include.has(tag.name) || exclude.has(tag.name)) continue;
+    if (needle && !tag.name.toLowerCase().includes(needle)) continue;
 
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'tag';
-      chip.dataset.id = String(tag.id);
-      chip.textContent = `#${tag.name}`;
-      chip.addEventListener('click', () => onToggle(tag.id));
-      container.appendChild(chip);
-      count++;
-    }
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'tag';
+    chip.textContent = `#${tag.name}`;
+    chip.addEventListener('click', () => onToggle(tag.name));
+    container.appendChild(chip);
+    count++;
   }
 
   if (count === 0) {
@@ -94,29 +88,28 @@ export function renderAvailableTags(container, groups, include, exclude, filterT
 }
 
 /**
- * Render a cloud of currently-selected tags (either the include or exclude set).
+ * Render a cloud of currently-selected tag names (include or exclude set).
  * @param {HTMLElement} container
- * @param {Set<number>} ids          Tag ids to render.
- * @param {Record<number,string>} tagName
+ * @param {Set<string>} names        Tag names to render.
  * @param {('include'|'exclude')} variant  CSS state class applied to each chip.
  * @param {string} emptyText         Shown when the set is empty.
- * @param {(tagId:number)=>void} onToggle
+ * @param {(name:string)=>void} onToggle
  */
-export function renderSelectedCloud(container, ids, tagName, variant, emptyText, onToggle) {
+export function renderSelectedCloud(container, names, variant, emptyText, onToggle) {
   container.innerHTML = '';
-  if (ids.size === 0) {
+  if (names.size === 0) {
     const span = document.createElement('span');
     span.className = 'hint';
     span.textContent = emptyText;
     container.appendChild(span);
     return;
   }
-  for (const id of ids) {
+  for (const name of names) {
     const chip = document.createElement('button');
     chip.type = 'button';
     chip.className = `tag ${variant}`;
-    chip.textContent = `#${tagName[id] ?? id}`;
-    chip.addEventListener('click', () => onToggle(id));
+    chip.textContent = `#${name}`;
+    chip.addEventListener('click', () => onToggle(name));
     container.appendChild(chip);
   }
 }

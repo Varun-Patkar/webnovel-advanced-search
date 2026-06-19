@@ -43,7 +43,7 @@ const els = {
 
 /** Mutable application state. */
 const state = {
-  snapshot: { books: [], generatedAt: null, tagName: {}, groups: [] },
+  snapshot: { books: [], generatedAt: null, tagName: {}, nameToIds: {}, tags: [] },
   filters: defaultFilters(),
   results: [],
   shown: 0,
@@ -65,17 +65,18 @@ function debounce(fn, ms) {
 
 /**
  * Cycle a tag through the three states: neutral → include → exclude → neutral.
- * @param {number} tagId
+ * Tags are identified by name so merged duplicates behave as one.
+ * @param {string} name
  */
-function toggleTag(tagId) {
+function toggleTag(name) {
   const { include, exclude } = state.filters;
-  if (include.has(tagId)) {
-    include.delete(tagId);
-    exclude.add(tagId);
-  } else if (exclude.has(tagId)) {
-    exclude.delete(tagId);
+  if (include.has(name)) {
+    include.delete(name);
+    exclude.add(name);
+  } else if (exclude.has(name)) {
+    exclude.delete(name);
   } else {
-    include.add(tagId);
+    include.add(name);
   }
   refreshTagClouds();
   applyAndRender();
@@ -86,15 +87,15 @@ function refreshTagClouds() {
   const { include, exclude, type } = state.filters;
   renderAvailableTags(
     els.availableTags,
-    state.snapshot.groups,
+    state.snapshot.tags,
     include,
     exclude,
     els.tagFilter.value,
     type,
     toggleTag,
   );
-  renderSelectedCloud(els.includeTags, include, state.snapshot.tagName, 'include', 'None.', toggleTag);
-  renderSelectedCloud(els.excludeTags, exclude, state.snapshot.tagName, 'exclude', 'None.', toggleTag);
+  renderSelectedCloud(els.includeTags, include, 'include', 'None.', toggleTag);
+  renderSelectedCloud(els.excludeTags, exclude, 'exclude', 'None.', toggleTag);
   els.includeCount.textContent = include.size ? `(${include.size})` : '';
   els.excludeCount.textContent = exclude.size ? `(${exclude.size})` : '';
 }
@@ -104,11 +105,11 @@ function refreshTagClouds() {
  * @returns {string}
  */
 function filterSummary() {
-  const { filters, snapshot } = state;
+  const { filters } = state;
   const parts = [];
   if (filters.type !== 'all') parts.push(filters.type === 4 ? 'Fanfic' : 'Novel');
-  for (const id of filters.include) parts.push(`#${snapshot.tagName[id] ?? id}`);
-  for (const id of filters.exclude) parts.push(`−#${snapshot.tagName[id] ?? id}`);
+  for (const name of filters.include) parts.push(`#${name}`);
+  for (const name of filters.exclude) parts.push(`−#${name}`);
   if (filters.minRating > 0) parts.push(`★≥${filters.minRating}`);
   if (filters.minChapters > 0) parts.push(`📖≥${filters.minChapters}`);
   return parts.join('  ');
@@ -116,7 +117,7 @@ function filterSummary() {
 
 /** Re-run the search and repaint the first page of results. */
 function applyAndRender() {
-  state.results = runSearch(state.snapshot.books, state.filters);
+  state.results = runSearch(state.snapshot.books, state.filters, state.snapshot.nameToIds);
   state.shown = 0;
   renderResultsBar(
     els.resultCount,
