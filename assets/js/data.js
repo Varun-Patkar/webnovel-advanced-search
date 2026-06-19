@@ -70,7 +70,7 @@ function buildTagModel(novel, fanfic) {
     }
   }
 
-  const tags = [...byName.values()];
+  const tags = [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
   const nameToIds = {};
   for (const entry of tags) nameToIds[entry.name] = entry.ids;
 
