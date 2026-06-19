@@ -9,11 +9,11 @@
 import { loadSnapshot } from './data.js';
 import { defaultFilters, runSearch } from './search.js';
 import {
-  renderExcludeCloud,
+  renderAvailableTags,
   renderResults,
   renderResultsBar,
   renderSnapshotMeta,
-  renderTagCloud,
+  renderSelectedCloud,
 } from './ui.js';
 
 /** How many cards to reveal per page / "Show more" click. */
@@ -28,6 +28,7 @@ const els = {
   minChapters: document.getElementById('minChapters'),
   sortBy: document.getElementById('sortBy'),
   tagFilter: document.getElementById('tagFilter'),
+  availableTags: document.getElementById('availableTags'),
   includeTags: document.getElementById('includeTags'),
   excludeTags: document.getElementById('excludeTags'),
   includeCount: document.getElementById('includeCount'),
@@ -80,18 +81,20 @@ function toggleTag(tagId) {
   applyAndRender();
 }
 
-/** Re-render both tag clouds to reflect current selections. */
+/** Re-render the three tag sections to reflect current selections + type. */
 function refreshTagClouds() {
-  const { include, exclude } = state.filters;
-  renderTagCloud(
-    els.includeTags,
+  const { include, exclude, type } = state.filters;
+  renderAvailableTags(
+    els.availableTags,
     state.snapshot.groups,
     include,
     exclude,
     els.tagFilter.value,
+    type,
     toggleTag,
   );
-  renderExcludeCloud(els.excludeTags, exclude, state.snapshot.tagName, toggleTag);
+  renderSelectedCloud(els.includeTags, include, state.snapshot.tagName, 'include', 'None.', toggleTag);
+  renderSelectedCloud(els.excludeTags, exclude, state.snapshot.tagName, 'exclude', 'None.', toggleTag);
   els.includeCount.textContent = include.size ? `(${include.size})` : '';
   els.excludeCount.textContent = exclude.size ? `(${exclude.size})` : '';
 }
@@ -153,6 +156,7 @@ function wireEvents() {
     btn.classList.add('active');
     const raw = btn.dataset.type;
     state.filters.type = raw === 'all' ? 'all' : Number(raw);
+    refreshTagClouds();
     applyAndRender();
   });
 

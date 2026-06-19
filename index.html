@@ -77,6 +77,7 @@
             <select id="minChapters" class="input">
               <option value="0">Any</option>
               <option value="50">50+</option>
+              <option value="100">100+</option>
               <option value="300">300+</option>
               <option value="1000">1000+</option>
             </select>
@@ -94,9 +95,7 @@
         </div>
 
         <div class="field">
-          <div class="field-head">
-            <span class="field-label">Include tags <small id="includeCount"></small></span>
-          </div>
+          <span class="field-label">Tags</span>
           <input
             type="search"
             id="tagFilter"
@@ -104,13 +103,18 @@
             placeholder="Filter tags…"
             autocomplete="off"
           />
-          <div class="tag-cloud" id="includeTags" aria-label="Include tags"></div>
+          <div class="tag-cloud" id="availableTags" aria-label="Available tags"></div>
+          <p class="hint">Click a tag to include it, click an included tag to exclude it, click an excluded tag to clear it.</p>
         </div>
 
         <div class="field">
-          <span class="field-label">Exclude tags <small id="excludeCount"></small></span>
-          <div class="tag-cloud selected-only" id="excludeTags" aria-label="Exclude tags"></div>
-          <p class="hint">Tip: click a tag once to include, again to exclude, again to clear.</p>
+          <span class="field-label">Included tags <small id="includeCount"></small></span>
+          <div class="tag-cloud selected-only" id="includeTags" aria-label="Included tags"></div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Excluded tags <small id="excludeCount"></small></span>
+          <div class="tag-cloud selected-only" id="excludeTags" aria-label="Excluded tags"></div>
         </div>
 
         <button class="btn-reset" id="resetBtn" type="button">Reset filters</button>

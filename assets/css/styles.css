@@ -38,8 +38,16 @@ body {
 }
 
 .wrap {
-  width: min(1200px, 100% - 2rem);
+  /* Desktop: no fixed max width, just a 5vw gutter on each side. */
+  width: calc(100% - 10vw);
   margin-inline: auto;
+}
+
+@media (max-width: 820px) {
+  /* Mobile: keep the original tight 1rem gutter on each side. */
+  .wrap {
+    width: calc(100% - 2rem);
+  }
 }
 
 /* Header ------------------------------------------------------------------ */

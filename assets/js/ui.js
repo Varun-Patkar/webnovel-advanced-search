@@ -47,59 +47,74 @@ export function renderSnapshotMeta(el, generatedAt, bookCount) {
 }
 
 /**
- * Render the include-tag cloud. Each tag reflects its current state (neutral /
- * include / exclude) via CSS classes.
+ * Render the "available" tag cloud: every tag that is neither included nor
+ * excluded, restricted to the active content type. Tags already in the
+ * include/exclude sets are hidden here because they live in their own sections.
  * @param {HTMLElement} container
  * @param {Array<{categoryType:number, name:string, tags:any[]}>} groups
  * @param {Set<number>} include
  * @param {Set<number>} exclude
- * @param {string} filterText   Only show tags whose name contains this.
+ * @param {string} filterText        Only show tags whose name contains this.
+ * @param {('all'|number)} type      Active type filter (1 novel / 4 fanfic / 'all').
  * @param {(tagId:number)=>void} onToggle
  */
-export function renderTagCloud(container, groups, include, exclude, filterText, onToggle) {
+export function renderAvailableTags(container, groups, include, exclude, filterText, type, onToggle) {
   container.innerHTML = '';
   const seen = new Set();
   const needle = filterText.trim().toLowerCase();
+  let count = 0;
 
   for (const group of groups) {
+    // When a type is selected, only surface that category's tags.
+    if (type !== 'all' && group.categoryType !== type) continue;
     for (const tag of group.tags) {
       if (seen.has(tag.id)) continue;
       seen.add(tag.id);
-      if (needle && !tag.name.includes(needle)) continue;
+      // Selected tags are rendered in the Included / Excluded sections instead.
+      if (include.has(tag.id) || exclude.has(tag.id)) continue;
+      if (needle && !tag.name.toLowerCase().includes(needle)) continue;
 
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'tag';
       chip.dataset.id = String(tag.id);
       chip.textContent = `#${tag.name}`;
-      if (include.has(tag.id)) chip.classList.add('include');
-      else if (exclude.has(tag.id)) chip.classList.add('exclude');
       chip.addEventListener('click', () => onToggle(tag.id));
       container.appendChild(chip);
+      count++;
     }
+  }
+
+  if (count === 0) {
+    const span = document.createElement('span');
+    span.className = 'hint';
+    span.textContent = 'No tags match.';
+    container.appendChild(span);
   }
 }
 
 /**
- * Render the "exclude" summary cloud (only currently-excluded tags).
+ * Render a cloud of currently-selected tags (either the include or exclude set).
  * @param {HTMLElement} container
- * @param {Set<number>} exclude
+ * @param {Set<number>} ids          Tag ids to render.
  * @param {Record<number,string>} tagName
+ * @param {('include'|'exclude')} variant  CSS state class applied to each chip.
+ * @param {string} emptyText         Shown when the set is empty.
  * @param {(tagId:number)=>void} onToggle
  */
-export function renderExcludeCloud(container, exclude, tagName, onToggle) {
+export function renderSelectedCloud(container, ids, tagName, variant, emptyText, onToggle) {
   container.innerHTML = '';
-  if (exclude.size === 0) {
+  if (ids.size === 0) {
     const span = document.createElement('span');
     span.className = 'hint';
-    span.textContent = 'None.';
+    span.textContent = emptyText;
     container.appendChild(span);
     return;
   }
-  for (const id of exclude) {
+  for (const id of ids) {
     const chip = document.createElement('button');
     chip.type = 'button';
-    chip.className = 'tag exclude';
+    chip.className = `tag ${variant}`;
     chip.textContent = `#${tagName[id] ?? id}`;
     chip.addEventListener('click', () => onToggle(id));
     container.appendChild(chip);
