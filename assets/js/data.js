@@ -70,11 +70,44 @@ function buildTagModel(novel, fanfic) {
     }
   }
 
-  const tags = [...byName.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const tags = [...byName.values()];
   const nameToIds = {};
   for (const entry of tags) nameToIds[entry.name] = entry.ids;
 
   return { tagName, nameToIds, tags };
+}
+
+/**
+ * Count how many books carry each merged tag and order the tags by that count
+ * (descending), falling back to alphabetical order on ties. A book counts once
+ * per tag even when several of the tag's ids appear on it. Mutates each tag by
+ * setting its `count` and returns the same (now sorted) array.
+ * @param {Array<{name:string, types:number[], ids:number[], count?:number}>} tags
+ * @param {any[]} books
+ * @returns {Array<{name:string, types:number[], ids:number[], count:number}>}
+ */
+function countAndSortTags(tags, books) {
+  // Map every id to its owning merged tag entry for O(1) lookups per book id.
+  const idToEntry = new Map();
+  for (const entry of tags) {
+    entry.count = 0;
+    for (const id of entry.ids) idToEntry.set(id, entry);
+  }
+
+  for (const book of books) {
+    const counted = new Set();
+    for (const id of book.t ?? []) {
+      const entry = idToEntry.get(id);
+      // Avoid double-counting a book whose tags share a merged name.
+      if (entry && !counted.has(entry)) {
+        counted.add(entry);
+        entry.count++;
+      }
+    }
+  }
+
+  tags.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  return tags;
 }
 
 /**
@@ -84,7 +117,7 @@ function buildTagModel(novel, fanfic) {
  *   generatedAt: string|null,
  *   tagName: Record<number,string>,
  *   nameToIds: Record<string, number[]>,
- *   tags: Array<{name:string, types:number[], ids:number[]}>
+ *   tags: Array<{name:string, types:number[], ids:number[], count:number}>
  * }>}
  */
 export async function loadSnapshot() {
@@ -94,9 +127,11 @@ export async function loadSnapshot() {
     loadJson(PATHS.tagsFanfic, null),
   ]);
 
+  const books = index.books ?? [];
   const { tagName, nameToIds, tags } = buildTagModel(novel, fanfic);
+  countAndSortTags(tags, books);
   return {
-    books: index.books ?? [],
+    books,
     generatedAt: index.generatedAt ?? null,
     tagName,
     nameToIds,

@@ -73,7 +73,15 @@ export function renderAvailableTags(container, tags, include, exclude, filterTex
     const chip = document.createElement('button');
     chip.type = 'button';
     chip.className = 'tag';
-    chip.textContent = `#${tag.name}`;
+    chip.title = `${tag.count} book${tag.count === 1 ? '' : 's'}`;
+
+    const label = document.createElement('span');
+    label.textContent = `#${tag.name}`;
+    const pill = document.createElement('span');
+    pill.className = 'tag-count';
+    pill.textContent = compact.format(tag.count ?? 0);
+    chip.append(label, pill);
+
     chip.addEventListener('click', () => onToggle(tag.name));
     container.appendChild(chip);
     count++;
