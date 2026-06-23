@@ -133,6 +133,9 @@ function cardFor(book) {
   a.href = `https://www.webnovel.com/book/${book.id}`;
   a.target = '_blank';
   a.rel = 'noopener';
+  // Native tooltip showing the full book name on hover, since the link/URL
+  // (book id) gives no hint about the actual title.
+  a.title = book.n;
 
   const typeLabel = book.ct === 4 ? 'Fanfic' : 'Novel';
   a.innerHTML = `

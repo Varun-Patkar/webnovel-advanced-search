@@ -8,6 +8,7 @@
 
 import { loadSnapshot } from './data.js';
 import { defaultFilters, runSearch } from './search.js';
+import { filtersToParams, filtersToUrl, paramsToFilters, saveFilters, loadStoredFilters } from './urlState.js';
 import {
   renderAvailableTags,
   renderResults,
@@ -34,6 +35,7 @@ const els = {
   includeCount: document.getElementById('includeCount'),
   excludeCount: document.getElementById('excludeCount'),
   resetBtn: document.getElementById('resetBtn'),
+  shareBtn: document.getElementById('shareBtn'),
   resultsGrid: document.getElementById('resultsGrid'),
   resultCount: document.getElementById('resultCount'),
   activeFilters: document.getElementById('activeFilters'),
@@ -115,8 +117,40 @@ function filterSummary() {
   return parts.join('  ');
 }
 
+/**
+ * Reflect the current filter state into the URL query string without adding a
+ * history entry, so the address bar always mirrors the active view and can be
+ * copied/shared at any moment.
+ */
+function syncUrl() {
+  const params = filtersToParams(state.filters);
+  const query = params.toString();
+  const url = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+  window.history.replaceState(null, '', url);
+  // Remember the latest filters so the next bare visit restores them.
+  saveFilters(state.filters);
+}
+
+/**
+ * Push the values held in `state.filters` back into the DOM controls. Used when
+ * filters originate from somewhere other than a direct user interaction (e.g.
+ * restored from the URL on load).
+ */
+function syncControlsFromState() {
+  const { filters } = state;
+  els.keyword.value = filters.keyword;
+  els.minRating.value = String(filters.minRating);
+  els.minChapters.value = String(filters.minChapters);
+  els.sortBy.value = filters.sortBy;
+  const typeStr = filters.type === 'all' ? 'all' : String(filters.type);
+  [...els.typeSegmented.children].forEach((c) =>
+    c.classList.toggle('active', c.dataset.type === typeStr),
+  );
+}
+
 /** Re-run the search and repaint the first page of results. */
 function applyAndRender() {
+  syncUrl();
   state.results = runSearch(state.snapshot.books, state.filters, state.snapshot.nameToIds);
   state.shown = 0;
   renderResultsBar(
@@ -180,6 +214,31 @@ function wireEvents() {
 
   els.loadMoreBtn.addEventListener('click', () => showNextPage(true));
 
+  els.shareBtn.addEventListener('click', async () => {
+    const url = filtersToUrl(state.filters);
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Clipboard API can be blocked (e.g. insecure context); fall back to a
+      // hidden textarea + execCommand so sharing still works.
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    const original = els.shareBtn.textContent;
+    els.shareBtn.textContent = 'Copied!';
+    els.shareBtn.classList.add('copied');
+    setTimeout(() => {
+      els.shareBtn.textContent = original;
+      els.shareBtn.classList.remove('copied');
+    }, 1500);
+  });
+
   els.resetBtn.addEventListener('click', () => {
     state.filters = defaultFilters();
     els.keyword.value = '';
@@ -198,6 +257,12 @@ function wireEvents() {
 /** Bootstrap. */
 async function init() {
   state.snapshot = await loadSnapshot();
+  // Filters come from the URL if present (shared link), otherwise from the
+  // last session saved in localStorage, otherwise the defaults.
+  state.filters = window.location.search
+    ? paramsToFilters()
+    : loadStoredFilters() ?? defaultFilters();
+  syncControlsFromState();
   renderSnapshotMeta(
     els.snapshotMeta,
     state.snapshot.generatedAt,

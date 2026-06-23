@@ -295,6 +295,36 @@ body {
   color: var(--danger);
 }
 
+/* Sidebar action row: Share + Reset side by side. */
+.sidebar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-share {
+  flex: 1;
+  background: var(--accent, #6c8cff);
+  border: 1px solid transparent;
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 0.55rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-share:hover {
+  filter: brightness(1.08);
+}
+
+/* Brief "Copied!" confirmation state after a successful share. */
+.btn-share.copied {
+  background: var(--success, #2faa6a);
+}
+
+.sidebar-actions .btn-reset {
+  flex: 1;
+}
+
 /* Results ----------------------------------------------------------------- */
 .results-bar {
   display: flex;
