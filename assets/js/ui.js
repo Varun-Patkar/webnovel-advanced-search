@@ -57,8 +57,11 @@ export function renderSnapshotMeta(el, generatedAt, bookCount) {
  * @param {string} filterText        Only show tags whose name contains this.
  * @param {('all'|number)} type      Active type filter (1 novel / 4 fanfic / 'all').
  * @param {(name:string)=>void} onToggle
+ * @param {Map<string, number>} [counts]  Per-name book counts within the current
+ *   filtered result set. When provided, pills use these numbers and any tag
+ *   with zero matching books is hidden.
  */
-export function renderAvailableTags(container, tags, include, exclude, filterText, type, onToggle) {
+export function renderAvailableTags(container, tags, include, exclude, filterText, type, onToggle, counts) {
   container.innerHTML = '';
   const needle = filterText.trim().toLowerCase();
   let count = 0;
@@ -70,16 +73,22 @@ export function renderAvailableTags(container, tags, include, exclude, filterTex
     if (include.has(tag.name) || exclude.has(tag.name)) continue;
     if (needle && !tag.name.toLowerCase().includes(needle)) continue;
 
+    // Number of books carrying this tag within the current filtered pile.
+    // Falls back to the tag's global count when no filtered counts are given.
+    const tagCount = counts ? (counts.get(tag.name) ?? 0) : (tag.count ?? 0);
+    // Hide tags that have no books left after the active filters.
+    if (counts && tagCount === 0) continue;
+
     const chip = document.createElement('button');
     chip.type = 'button';
     chip.className = 'tag';
-    chip.title = `${tag.count} book${tag.count === 1 ? '' : 's'}`;
+    chip.title = `${tagCount} book${tagCount === 1 ? '' : 's'}`;
 
     const label = document.createElement('span');
     label.textContent = `#${tag.name}`;
     const pill = document.createElement('span');
     pill.className = 'tag-count';
-    pill.textContent = compact.format(tag.count ?? 0);
+    pill.textContent = compact.format(tagCount);
     chip.append(label, pill);
 
     chip.addEventListener('click', () => onToggle(tag.name));

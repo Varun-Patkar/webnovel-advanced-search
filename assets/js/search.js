@@ -111,3 +111,35 @@ export function defaultFilters() {
     sortBy: 'col',
   };
 }
+
+/**
+ * Count how many books in a given list carry each merged tag, keyed by tag
+ * *name*. Used to recompute the "available tags" pills against the currently
+ * filtered result set so the numbers reflect only what is on screen.
+ * A book counts at most once per merged tag, even if several of the tag's ids
+ * appear on it.
+ * @param {any[]} books  The (already filtered) books to count over.
+ * @param {Array<{name:string, ids:number[]}>} tags  Merged tag catalogue.
+ * @returns {Map<string, number>}  Tag name -> book count within `books`.
+ */
+export function countTagsByName(books, tags) {
+  // Map every tag id to its owning merged entry for O(1) per-id lookups.
+  const idToEntry = new Map();
+  for (const entry of tags) {
+    for (const id of entry.ids) idToEntry.set(id, entry);
+  }
+
+  const counts = new Map();
+  for (const book of books) {
+    const counted = new Set();
+    for (const id of book.t ?? []) {
+      const entry = idToEntry.get(id);
+      if (entry && !counted.has(entry)) {
+        counted.add(entry);
+        counts.set(entry.name, (counts.get(entry.name) ?? 0) + 1);
+      }
+    }
+  }
+  return counts;
+}
+

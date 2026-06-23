@@ -7,7 +7,7 @@
  */
 
 import { loadSnapshot } from './data.js';
-import { defaultFilters, runSearch } from './search.js';
+import { defaultFilters, runSearch, countTagsByName } from './search.js';
 import { filtersToParams, filtersToUrl, paramsToFilters, saveFilters, loadStoredFilters } from './urlState.js';
 import {
   renderAvailableTags,
@@ -88,6 +88,8 @@ function toggleTag(name) {
 /** Re-render the three tag sections to reflect current selections + type. */
 function refreshTagClouds() {
   const { include, exclude, type } = state.filters;
+  // Counts/visibility of available tags reflect the current filtered results.
+  const tagCounts = countTagsByName(state.results, state.snapshot.tags);
   renderAvailableTags(
     els.availableTags,
     state.snapshot.tags,
@@ -96,6 +98,7 @@ function refreshTagClouds() {
     els.tagFilter.value,
     type,
     toggleTag,
+    tagCounts,
   );
   renderSelectedCloud(els.includeTags, include, 'include', 'None.', toggleTag);
   renderSelectedCloud(els.excludeTags, exclude, 'exclude', 'None.', toggleTag);
@@ -154,6 +157,8 @@ function applyAndRender() {
   syncUrl();
   state.results = runSearch(state.snapshot.books, state.filters, state.snapshot.nameToIds);
   state.shown = 0;
+  // Recompute the available-tag pills against the freshly filtered results.
+  refreshTagClouds();
   renderResultsBar(
     els.resultCount,
     els.activeFilters,
