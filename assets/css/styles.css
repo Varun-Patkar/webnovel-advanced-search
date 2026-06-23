@@ -4,6 +4,14 @@
  * collapses to a single column on narrow screens.
  * ---------------------------------------------------------------------------*/
 
+/* The `hidden` HTML attribute must always win, even over rules that set an
+ * explicit `display` (e.g. `.btn-more { display: block }`). Author styles
+ * normally beat the UA `[hidden]` rule, which would leave hidden elements
+ * visible — this guarantees they collapse. */
+[hidden] {
+  display: none !important;
+}
+
 :root {
   --bg: #0f1115;
   --bg-elev: #171a21;
