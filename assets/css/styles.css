@@ -440,6 +440,14 @@ body {
   filter: brightness(1.05);
 }
 
+/* End-of-list note shown when every matching result is already on screen. */
+.end-of-list {
+  text-align: center;
+  margin: 1.5rem auto 0;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
 /* Footer ------------------------------------------------------------------ */
 .site-footer {
   border-top: 1px solid var(--border);

@@ -41,6 +41,7 @@ const els = {
   activeFilters: document.getElementById('activeFilters'),
   emptyState: document.getElementById('emptyState'),
   loadMoreBtn: document.getElementById('loadMoreBtn'),
+  endOfList: document.getElementById('endOfList'),
 };
 
 /** Mutable application state. */
@@ -171,7 +172,11 @@ function showNextPage(append) {
   const next = state.results.slice(state.shown, state.shown + PAGE_SIZE);
   renderResults(els.resultsGrid, next, append);
   state.shown += next.length;
-  els.loadMoreBtn.hidden = state.shown >= state.results.length;
+  const more = state.shown < state.results.length;
+  els.loadMoreBtn.hidden = !more;
+  // Show a friendly end-of-list note only when there are results but no more
+  // pages to reveal.
+  els.endOfList.hidden = more || state.results.length === 0;
 }
 
 /** Attach all event listeners. */
