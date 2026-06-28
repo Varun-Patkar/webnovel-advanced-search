@@ -47,13 +47,14 @@ export function renderSnapshotMeta(el, generatedAt, bookCount) {
 }
 
 /**
- * Render the "available" tag cloud: every tag that is neither included nor
- * excluded, restricted to the active content type. Tags are keyed by name, so
- * duplicate names across categories collapse into a single chip.
+ * Render the "available" tag palette: every tag for the active content type.
+ * Clicking a chip adds the tag to the current query (the focused builder group,
+ * or the caret position in Query mode). Tags already referenced anywhere in the
+ * query are highlighted as "used". Tags are keyed by name, so duplicate names
+ * across categories collapse into a single chip.
  * @param {HTMLElement} container
  * @param {Array<{name:string, types:number[], ids:number[]}>} tags  Merged tags.
- * @param {Set<string>} include
- * @param {Set<string>} exclude
+ * @param {Set<string>} usedNames    Tag names currently referenced in the query.
  * @param {string} filterText        Only show tags whose name contains this.
  * @param {('all'|number)} type      Active type filter (1 novel / 4 fanfic / 'all').
  * @param {(name:string)=>void} onToggle
@@ -61,7 +62,7 @@ export function renderSnapshotMeta(el, generatedAt, bookCount) {
  *   filtered result set. When provided, pills use these numbers and any tag
  *   with zero matching books is hidden.
  */
-export function renderAvailableTags(container, tags, include, exclude, filterText, type, onToggle, counts) {
+export function renderAvailableTags(container, tags, usedNames, filterText, type, onToggle, counts) {
   container.innerHTML = '';
   const needle = filterText.trim().toLowerCase();
   let count = 0;
@@ -69,8 +70,6 @@ export function renderAvailableTags(container, tags, include, exclude, filterTex
   for (const tag of tags) {
     // When a type is selected, only surface tags that exist in that category.
     if (type !== 'all' && !tag.types.includes(type)) continue;
-    // Selected tags are rendered in the Included / Excluded sections instead.
-    if (include.has(tag.name) || exclude.has(tag.name)) continue;
     if (needle && !tag.name.toLowerCase().includes(needle)) continue;
 
     // Number of books carrying this tag within the current filtered pile.
@@ -81,7 +80,7 @@ export function renderAvailableTags(container, tags, include, exclude, filterTex
 
     const chip = document.createElement('button');
     chip.type = 'button';
-    chip.className = 'tag';
+    chip.className = usedNames.has(tag.name) ? 'tag used' : 'tag';
     chip.title = `${tagCount} book${tagCount === 1 ? '' : 's'}`;
 
     const label = document.createElement('span');
@@ -101,33 +100,6 @@ export function renderAvailableTags(container, tags, include, exclude, filterTex
     span.className = 'hint';
     span.textContent = 'No tags match.';
     container.appendChild(span);
-  }
-}
-
-/**
- * Render a cloud of currently-selected tag names (include or exclude set).
- * @param {HTMLElement} container
- * @param {Set<string>} names        Tag names to render.
- * @param {('include'|'exclude')} variant  CSS state class applied to each chip.
- * @param {string} emptyText         Shown when the set is empty.
- * @param {(name:string)=>void} onToggle
- */
-export function renderSelectedCloud(container, names, variant, emptyText, onToggle) {
-  container.innerHTML = '';
-  if (names.size === 0) {
-    const span = document.createElement('span');
-    span.className = 'hint';
-    span.textContent = emptyText;
-    container.appendChild(span);
-    return;
-  }
-  for (const name of names) {
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = `tag ${variant}`;
-    chip.textContent = `#${name}`;
-    chip.addEventListener('click', () => onToggle(name));
-    container.appendChild(chip);
   }
 }
 

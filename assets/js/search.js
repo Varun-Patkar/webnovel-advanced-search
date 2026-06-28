@@ -6,14 +6,16 @@
  * fast enough to run on every keystroke for tens of thousands of books.
  */
 
+import { emptyExpr, isEmptyExpr, evalExpr } from './query.js';
+
 /**
  * @typedef {Object} Filters
  * @property {string} keyword       Free text matched against title/author/desc.
  * @property {('all'|number)} type  'all', or a categoryType (1 novel / 4 fanfic).
  * @property {number} minRating     Minimum totalScore.
  * @property {number} minChapters   Minimum chapter count.
- * @property {Set<string>} include  Tag names the book MUST have (AND).
- * @property {Set<string>} exclude  Tag names the book must NOT have.
+ * @property {import('./query.js').Node} expr  Boolean tag-query tree.
+ * @property {('tree'|'text')} tagMode  Which tag editor the user last used.
  * @property {('col'|'v'|'s'|'ch')} sortBy  Sort key.
  */
 
@@ -57,18 +59,10 @@ function matches(book, f, keywordLower, nameToIds) {
 
   if (keywordLower && !haystack(book).includes(keywordLower)) return false;
 
-  // Tag constraints are matched by name. A merged tag name may resolve to more
-  // than one id, so a book satisfies it when it carries ANY of those ids.
-  if (f.include.size || f.exclude.size) {
-    const tset = tagSet(book);
-    for (const name of f.include) {
-      const ids = nameToIds[name];
-      if (!ids || !ids.some((id) => tset.has(id))) return false;
-    }
-    for (const name of f.exclude) {
-      const ids = nameToIds[name];
-      if (ids && ids.some((id) => tset.has(id))) return false;
-    }
+  // The boolean tag query is evaluated against the book's tag-id set. An empty
+  // query imposes no constraint, so we skip the work entirely in that case.
+  if (!isEmptyExpr(f.expr)) {
+    if (!evalExpr(f.expr, tagSet(book), nameToIds)) return false;
   }
   return true;
 }
@@ -106,8 +100,8 @@ export function defaultFilters() {
     type: 'all',
     minRating: 0,
     minChapters: 0,
-    include: new Set(),
-    exclude: new Set(),
+    expr: emptyExpr(),
+    tagMode: 'tree',
     sortBy: 'col',
   };
 }
