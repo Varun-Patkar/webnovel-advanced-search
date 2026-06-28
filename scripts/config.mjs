@@ -66,7 +66,7 @@ export const config = {
    * pulled. Raising it deepens coverage; the concurrency pool keeps the extra
    * pages from costing proportionally more wall-clock time.
    */
-  maxPagesPerTag: envInt('WN_MAX_PAGES_PER_TAG', 3),
+  maxPagesPerTag: envInt('WN_MAX_PAGES_PER_TAG', 5),
 
   /**
    * How many tags to crawl in parallel. The crawl is latency-bound (each
@@ -74,7 +74,7 @@ export const config = {
    * lets us pull more pages in roughly the same wall-clock time. Keep this
    * modest to stay polite and avoid tripping Cloudflare / rate limits.
    */
-  concurrency: envInt('WN_CONCURRENCY', 3),
+  concurrency: envInt('WN_CONCURRENCY', 6),
 
   /**
    * Minimum chapter count a book must have to be kept in the snapshot. Books

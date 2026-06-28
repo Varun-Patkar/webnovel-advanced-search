@@ -90,8 +90,13 @@ function compactBook(book, categoryType) {
  * @param {number} tagId
  * @param {Map<string, object>} bookMap  Accumulator keyed by book id.
  * @param {{maxRetries:number, delayMs:number}} opts
+ * @returns {Promise<number>}  How many genuinely-new books this tag contributed.
  */
 async function crawlTag(page, token, categoryType, tagId, bookMap, opts) {
+  // Count this tag's own insertions rather than diffing bookMap.size before/after
+  // — under the concurrency pool other workers mutate the shared map between a
+  // before/after read, which would mis-attribute their additions to this tag.
+  let added = 0;
   for (const sex of config.sexes) {
     for (let pageIndex = 1; pageIndex <= config.maxPagesPerTag; pageIndex += 1) {
       const { books, last } = await getSearchList(
@@ -108,12 +113,14 @@ async function crawlTag(page, token, categoryType, tagId, bookMap, opts) {
         const id = String(raw.bookId);
         if (!bookMap.has(id)) {
           bookMap.set(id, compactBook(raw, categoryType));
+          added += 1;
         }
       }
       await sleep(config.delayMs);
       if (last || books.length === 0) break;
     }
   }
+  return added;
 }
 
 /**
@@ -165,11 +172,10 @@ async function crawlCategory(page, token, categoryType, opts) {
   // Crawl tags through a concurrency pool so the network latency of many
   // requests overlaps instead of stacking up sequentially.
   await runPool(allTags.slice(0, limit), config.concurrency, async (tag) => {
-    const before = bookMap.size;
-    await crawlTag(page, token, categoryType, tag.id, bookMap, opts);
+    const added = await crawlTag(page, token, categoryType, tag.id, bookMap, opts);
     done += 1;
     console.log(
-      `  [${done}/${limit}] #${tag.name} … +${bookMap.size - before} (total ${bookMap.size})`,
+      `  [${done}/${limit}] #${tag.name} … +${added} new (total ${bookMap.size})`,
     );
   });
 
