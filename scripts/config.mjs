@@ -61,10 +61,29 @@ export const config = {
   sexes: envIntList('WN_SEXES', [1, 2]),
 
   /**
-   * Maximum result pages to fetch per (tag × sex) combination. Keep this small
-   * — it is the main lever on snapshot size and crawl duration.
+   * Maximum result pages to fetch per (tag × sex) combination. Combined with
+   * the concurrency pool below, this is the main lever on how many books are
+   * pulled. Raising it deepens coverage; the concurrency pool keeps the extra
+   * pages from costing proportionally more wall-clock time.
    */
-  maxPagesPerTag: envInt('WN_MAX_PAGES_PER_TAG', 1),
+  maxPagesPerTag: envInt('WN_MAX_PAGES_PER_TAG', 3),
+
+  /**
+   * How many tags to crawl in parallel. The crawl is latency-bound (each
+   * request waits on the network), so a small pool multiplies throughput and
+   * lets us pull more pages in roughly the same wall-clock time. Keep this
+   * modest to stay polite and avoid tripping Cloudflare / rate limits.
+   */
+  concurrency: envInt('WN_CONCURRENCY', 3),
+
+  /**
+   * Minimum chapter count a book must have to be kept in the snapshot. Books
+   * below this are discarded during the crawl, keeping the index focused on
+   * substantial, long-running stories. WebNovel's own server-side filter only
+   * buckets at 300/1000, so this finer threshold is applied client-side using
+   * each book's `chapterNum`.
+   */
+  minChapters: envInt('WN_MIN_CHAPTERS', 100),
 
   /**
    * Optional cap on how many tags to crawl per category (0 = all tags in the

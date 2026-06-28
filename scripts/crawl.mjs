@@ -101,6 +101,10 @@ async function crawlTag(page, token, categoryType, tagId, bookMap, opts) {
         opts,
       );
       for (const raw of books) {
+        // Keep only substantial, long-running stories. WebNovel's server-side
+        // chapter filter is too coarse (300/1000 buckets), so enforce the
+        // finer threshold here using each book's reported chapter count.
+        if ((raw.chapterNum ?? 0) < config.minChapters) continue;
         const id = String(raw.bookId);
         if (!bookMap.has(id)) {
           bookMap.set(id, compactBook(raw, categoryType));
@@ -110,6 +114,30 @@ async function crawlTag(page, token, categoryType, tagId, bookMap, opts) {
       if (last || books.length === 0) break;
     }
   }
+}
+
+/**
+ * Run an async worker over `items` with a bounded number of concurrent tasks.
+ * Because Node is single-threaded, shared accumulators (e.g. the book map)
+ * mutated synchronously after each await are race-free.
+ * @template T
+ * @param {T[]} items
+ * @param {number} concurrency
+ * @param {(item:T, index:number)=>Promise<void>} worker
+ * @returns {Promise<void>}
+ */
+async function runPool(items, concurrency, worker) {
+  let next = 0;
+  async function runner() {
+    while (true) {
+      const i = next;
+      next += 1;
+      if (i >= items.length) return;
+      await worker(items[i], i);
+    }
+  }
+  const size = Math.max(1, Math.min(concurrency, items.length));
+  await Promise.all(Array.from({ length: size }, () => runner()));
 }
 
 /**
@@ -133,13 +161,17 @@ async function crawlCategory(page, token, categoryType, opts) {
   console.log(`  ${allTags.length} tags discovered; crawling ${limit}.`);
 
   const bookMap = new Map();
-  for (let i = 0; i < limit; i += 1) {
-    const tag = allTags[i];
-    process.stdout.write(`  [${i + 1}/${limit}] #${tag.name} … `);
+  let done = 0;
+  // Crawl tags through a concurrency pool so the network latency of many
+  // requests overlaps instead of stacking up sequentially.
+  await runPool(allTags.slice(0, limit), config.concurrency, async (tag) => {
     const before = bookMap.size;
     await crawlTag(page, token, categoryType, tag.id, bookMap, opts);
-    console.log(`+${bookMap.size - before} (total ${bookMap.size})`);
-  }
+    done += 1;
+    console.log(
+      `  [${done}/${limit}] #${tag.name} … +${bookMap.size - before} (total ${bookMap.size})`,
+    );
+  });
 
   return { tags, books: [...bookMap.values()] };
 }
@@ -261,6 +293,7 @@ async function main() {
       `categories=[${config.categoryTypes}] sexes=[${config.sexes}] ` +
       `maxPagesPerTag=${config.maxPagesPerTag} ` +
       `maxTagsPerCategory=${config.maxTagsPerCategory || 'all'} ` +
+      `concurrency=${config.concurrency} minChapters=${config.minChapters} ` +
       `channel=${config.browserChannel || 'chromium'} headless=${config.headless}`,
   );
 
