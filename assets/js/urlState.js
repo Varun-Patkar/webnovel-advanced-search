@@ -9,7 +9,6 @@
  */
 
 import { defaultFilters } from './search.js';
-import { isEmptyExpr, serializeExpr, parseQuery } from './query.js';
 
 /**
  * Map a Filters object into a URLSearchParams instance.
@@ -25,10 +24,11 @@ export function filtersToParams(filters) {
   if (filters.minRating > 0) params.set('rating', String(filters.minRating));
   if (filters.minChapters > 0) params.set('chapters', String(filters.minChapters));
   if (filters.sortBy && filters.sortBy !== 'col') params.set('sort', filters.sortBy);
-  // The whole boolean tag query travels as a single human-readable expression,
-  // e.g. `(action AND romance) OR comedy`.
-  if (!isEmptyExpr(filters.expr)) params.set('tags', serializeExpr(filters.expr));
-  if (filters.tagMode === 'text') params.set('tagmode', 'text');
+  if (filters.include.size) params.set('include', [...filters.include].join(','));
+  if (filters.exclude.size) params.set('exclude', [...filters.exclude].join(','));
+  // Only write a mode when it differs from its default (include=AND, exclude=OR).
+  if (filters.includeMode === 'OR') params.set('incmode', 'or');
+  if (filters.excludeMode === 'AND') params.set('excmode', 'and');
 
   return params;
 }
@@ -70,15 +70,18 @@ export function paramsToFilters(search = window.location.search) {
   const sort = params.get('sort');
   if (sort && ['col', 'v', 's', 'ch'].includes(sort)) filters.sortBy = sort;
 
-  // Restore the boolean tag query. Names are already canonical (we serialised
-  // them), so an identity resolver is fine; a malformed value degrades to the
-  // neutral "matches everything" query rather than throwing.
-  const tags = params.get('tags');
-  if (tags) {
-    const parsed = parseQuery(tags);
-    filters.expr = parsed.ast;
+  const include = params.get('include');
+  if (include) {
+    for (const name of include.split(',')) if (name) filters.include.add(name);
   }
-  if (params.get('tagmode') === 'text') filters.tagMode = 'text';
+
+  const exclude = params.get('exclude');
+  if (exclude) {
+    for (const name of exclude.split(',')) if (name) filters.exclude.add(name);
+  }
+
+  if (params.get('incmode') === 'or') filters.includeMode = 'OR';
+  if (params.get('excmode') === 'and') filters.excludeMode = 'AND';
 
   return filters;
 }

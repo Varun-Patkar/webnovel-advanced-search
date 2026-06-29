@@ -97,57 +97,40 @@
         </div>
 
         <div class="field">
-          <div class="tagq-head">
-            <span class="field-label">Tag filter <small id="tagSummary"></small></span>
-            <div class="segmented mode" id="tagModeToggle" role="tablist" aria-label="Tag filter mode">
-              <button class="seg active" data-tagmode="tree" type="button" role="tab">Builder</button>
-              <button class="seg" data-tagmode="text" type="button" role="tab">Query</button>
-            </div>
-          </div>
-
-          <!-- Builder (visual AND/OR tree) -->
-          <div id="tagTreePanel">
-            <div class="tag-tree" id="tagTree" aria-label="Tag query builder"></div>
-            <p class="hint">
-              Click tags below to drop them into the <strong>highlighted</strong> group. Toggle each
-              group between <code>AND</code>/<code>OR</code>, negate with <code>NOT</code>, and nest
-              groups to build logic like <code>(A AND B) OR C</code>.
-            </p>
-          </div>
-
-          <!-- Advanced (typed query) -->
-          <div id="tagTextPanel" hidden>
-            <textarea
-              id="tagQuery"
-              class="input tagq-input"
-              rows="3"
-              spellcheck="false"
-              autocomplete="off"
-              placeholder="(action AND romance) OR comedy"
-            ></textarea>
-            <p class="tagq-status" id="tagQueryStatus" aria-live="polite"></p>
-            <div class="tagq-suggest" id="tagQuerySuggest" hidden></div>
-            <details class="tagq-help">
-              <summary>Query syntax</summary>
-              <ul>
-                <li>Combine tags with <code>AND</code>, <code>OR</code>, and <code>NOT</code>.</li>
-                <li>Group with parentheses: <code>(action AND romance) OR comedy</code>.</li>
-                <li>Precedence is <code>NOT</code> &gt; <code>AND</code> &gt; <code>OR</code>; parentheses override it.</li>
-                <li>Multi-word tags work as-is; quote them if they contain a keyword, e.g. <code>"cat and mouse"</code>.</li>
-              </ul>
-            </details>
-          </div>
-        </div>
-
-        <div class="field">
+          <span class="field-label">Tags</span>
           <input
             type="search"
             id="tagFilter"
             class="input small"
-            placeholder="Search tags to add…"
+            placeholder="Filter tags…"
             autocomplete="off"
           />
           <div class="tag-cloud" id="availableTags" aria-label="Available tags"></div>
+          <p class="hint">Click a tag to include it, click again to exclude it, once more to clear.</p>
+        </div>
+
+        <div class="field">
+          <div class="tag-head">
+            <span class="field-label">Included tags <small id="includeCount"></small></span>
+            <div class="segmented mini" id="includeMode" role="tablist" aria-label="Included match mode">
+              <button class="seg active" data-mode="AND" type="button" role="tab">AND</button>
+              <button class="seg" data-mode="OR" type="button" role="tab">OR</button>
+            </div>
+          </div>
+          <div class="tag-cloud selected-only" id="includeTags" aria-label="Included tags"></div>
+          <p class="hint" id="includeHint">Book must have <strong>all</strong> included tags.</p>
+        </div>
+
+        <div class="field">
+          <div class="tag-head">
+            <span class="field-label">Excluded tags <small id="excludeCount"></small></span>
+            <div class="segmented mini" id="excludeMode" role="tablist" aria-label="Excluded match mode">
+              <button class="seg active" data-mode="OR" type="button" role="tab">OR</button>
+              <button class="seg" data-mode="AND" type="button" role="tab">AND</button>
+            </div>
+          </div>
+          <div class="tag-cloud selected-only" id="excludeTags" aria-label="Excluded tags"></div>
+          <p class="hint" id="excludeHint">Hide books that have <strong>any</strong> excluded tag.</p>
         </div>
 
         <div class="sidebar-actions">

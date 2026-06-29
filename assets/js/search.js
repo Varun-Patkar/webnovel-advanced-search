@@ -6,16 +6,16 @@
  * fast enough to run on every keystroke for tens of thousands of books.
  */
 
-import { emptyExpr, isEmptyExpr, evalExpr } from './query.js';
-
 /**
  * @typedef {Object} Filters
  * @property {string} keyword       Free text matched against title/author/desc.
  * @property {('all'|number)} type  'all', or a categoryType (1 novel / 4 fanfic).
  * @property {number} minRating     Minimum totalScore.
  * @property {number} minChapters   Minimum chapter count.
- * @property {import('./query.js').Node} expr  Boolean tag-query tree.
- * @property {('tree'|'text')} tagMode  Which tag editor the user last used.
+ * @property {Set<string>} include  Tag names to match (combined per includeMode).
+ * @property {Set<string>} exclude  Tag names to reject (combined per excludeMode).
+ * @property {('AND'|'OR')} includeMode  AND = must have all; OR = must have any.
+ * @property {('AND'|'OR')} excludeMode  OR = reject if any; AND = reject only if all.
  * @property {('col'|'v'|'s'|'ch')} sortBy  Sort key.
  */
 
@@ -59,10 +59,26 @@ function matches(book, f, keywordLower, nameToIds) {
 
   if (keywordLower && !haystack(book).includes(keywordLower)) return false;
 
-  // The boolean tag query is evaluated against the book's tag-id set. An empty
-  // query imposes no constraint, so we skip the work entirely in that case.
-  if (!isEmptyExpr(f.expr)) {
-    if (!evalExpr(f.expr, tagSet(book), nameToIds)) return false;
+  // Tag constraints. A merged tag name may resolve to several ids, so a book
+  // "has" a tag when it carries ANY of those ids. Included names combine per
+  // includeMode (AND = must have all, OR = must have any); excluded names per
+  // excludeMode (OR = reject if it has any, AND = reject only if it has all).
+  if (f.include.size || f.exclude.size) {
+    const tset = tagSet(book);
+    const hasTag = (name) => {
+      const ids = nameToIds[name];
+      return !!ids && ids.some((id) => tset.has(id));
+    };
+    if (f.include.size) {
+      const names = [...f.include];
+      const ok = f.includeMode === 'OR' ? names.some(hasTag) : names.every(hasTag);
+      if (!ok) return false;
+    }
+    if (f.exclude.size) {
+      const names = [...f.exclude];
+      const rejected = f.excludeMode === 'AND' ? names.every(hasTag) : names.some(hasTag);
+      if (rejected) return false;
+    }
   }
   return true;
 }
@@ -100,8 +116,10 @@ export function defaultFilters() {
     type: 'all',
     minRating: 0,
     minChapters: 0,
-    expr: emptyExpr(),
-    tagMode: 'tree',
+    include: new Set(),
+    exclude: new Set(),
+    includeMode: 'AND',
+    excludeMode: 'OR',
     sortBy: 'col',
   };
 }
