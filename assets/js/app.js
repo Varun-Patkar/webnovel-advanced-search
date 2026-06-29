@@ -113,9 +113,20 @@ function refreshModeUi() {
 
 /** Re-render the three tag sections to reflect current selections + type. */
 function refreshTagClouds() {
-  const { include, exclude, type } = state.filters;
+  const { include, exclude, type, includeMode } = state.filters;
   // Counts/visibility of available tags reflect the current filtered results.
-  const tagCounts = countTagsByName(state.results, state.snapshot.tags);
+  // Exception: when include uses OR, adding a tag *widens* the result set, so
+  // counting against the already-include-filtered results would wrongly hide
+  // tags that don't co-occur with the current selection (e.g. two mutually
+  // exclusive tags you want to OR together). In that case count against the set
+  // filtered by everything *except* the include constraint, so every still-
+  // eligible tag stays visible and selectable.
+  let countingBooks = state.results;
+  if (includeMode === 'OR' && include.size) {
+    const base = { ...state.filters, include: new Set() };
+    countingBooks = runSearch(state.snapshot.books, base, state.snapshot.nameToIds);
+  }
+  const tagCounts = countTagsByName(countingBooks, state.snapshot.tags);
   renderAvailableTags(
     els.availableTags,
     state.snapshot.tags,
